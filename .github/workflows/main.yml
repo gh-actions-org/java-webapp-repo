@@ -1,0 +1,77 @@
+name: Build, Test, and Deploy Java Web App
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-dev:
+    name: Build in Dev
+    runs-on: ubuntu-latest
+    environment: Dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean compile
+
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    environment: Test
+    needs: build-dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run Tests
+        run: mvn test
+
+      - name: Package Static Website
+        run: |
+          mkdir deploy
+          cp src/main/webapp/index.html deploy/
+          zip -r site.zip deploy/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-site
+          path: site.zip
+
+  deploy:
+    name: Deploy to Azure Web App
+    runs-on: ubuntu-latest
+    environment:
+      name: Prod
+      url: https://<your-app-name>.azurewebsites.net
+    needs: test
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-site
+
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: '<your-app-name>'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: site.zip
