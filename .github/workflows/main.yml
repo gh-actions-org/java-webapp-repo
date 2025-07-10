@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: Prod
-      url: https://<your-app-name>.azurewebsites.net
+      url: https://simple-java-web-app.azurewebsites.net
     needs: test
 
     steps:
@@ -72,6 +72,6 @@ jobs:
       - name: Deploy to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: '<your-app-name>'
+          app-name: 'simple-java-web-app'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: site.zip
